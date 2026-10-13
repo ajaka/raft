@@ -44,7 +44,6 @@ type Node struct {
 
 func InitNode(ctx context.Context, port string, seeds []config.Seed) (*Node, *slog.Logger, error) {
 
-	log, _ := log.InitLog()
 	n := Node{
 		role:        Follower,
 		term:        0,
@@ -54,7 +53,6 @@ func InitNode(ctx context.Context, port string, seeds []config.Seed) (*Node, *sl
 		votedFor:    "",
 		lastApplied: 0,
 		commitIndex: 0,
-		log:         log,
 		db:          db.InitDB(),
 		clusterSize: len(seeds),
 	}
@@ -67,6 +65,11 @@ func InitNode(ctx context.Context, port string, seeds []config.Seed) (*Node, *sl
 			continue
 		}
 	}
+	log, err := log.InitLog(me.Filename)
+	if err != nil {
+		return nil, nil, err
+	}
+	n.log = log
 	logger := slog.Default().With("ID", me.Id)
 	n.logger = logger
 	n.id = me.Id

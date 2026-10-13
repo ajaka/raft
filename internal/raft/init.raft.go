@@ -25,9 +25,15 @@ func Init(port string) error {
 	if err != nil {
 		return err
 	}
+	if err := n.ConnectPeers(seeds, port); err != nil {
+		return err
+	}
+
+	grpcServer := grpc.NewServer()
 	go func() {
 		<-sig
 		logger.Info("Received cancellation signal, shuting down.....")
+		grpcServer.GracefulStop()
 		cancel()
 	}()
 
@@ -35,8 +41,8 @@ func Init(port string) error {
 	if err != nil {
 		return err
 	}
-	grpcServer := grpc.NewServer()
 	rpc.RegisterPeerServiceServer(grpcServer, n)
+	rpc.RegisterClientServiceServer(grpcServer, n)
 
 	logger.Info("Raft Node is listening", "port", port)
 

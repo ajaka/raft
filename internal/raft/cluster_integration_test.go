@@ -67,9 +67,10 @@ func NewTestCluster(t *testing.T, nodeCount int) *TestCluster {
 	seeds := make([]config.Seed, nodeCount)
 	for i, port := range ports {
 		seeds[i] = config.Seed{
-			Id:   fmt.Sprintf("node-%d", i),
-			Addr: "127.0.0.1:" + port,
-			Port: port,
+			Id:       fmt.Sprintf("node-%d", i),
+			Addr:     "127.0.0.1:" + port,
+			Port:     port,
+			Filename: fmt.Sprintf("node_%d.log", i),
 		}
 	}
 
@@ -236,9 +237,10 @@ func (c *TestCluster) RestartNode(t *testing.T, idx int) {
 	seeds := make([]config.Seed, len(c.Ports))
 	for i, p := range c.Ports {
 		seeds[i] = config.Seed{
-			Id:   fmt.Sprintf("node-%d", i),
-			Addr: "127.0.0.1:" + p,
-			Port: p,
+			Id:       fmt.Sprintf("node-%d", i),
+			Addr:     "127.0.0.1:" + p,
+			Port:     p,
+			Filename: fmt.Sprintf("node_%d.log", i),
 		}
 	}
 
