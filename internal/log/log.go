@@ -16,10 +16,10 @@ type Log struct {
 	lastLogTerm  uint64
 }
 
-func InitLog() (*Log, error) {
+func InitLog(filename string) (*Log, error) {
 	log := Log{
 		index:        make(map[uint64]uint64),
-		filename:     "raft.log",
+		filename:     filename,
 		lastLogIndex: 0,
 		lastLogTerm:  0,
 	}
@@ -128,7 +128,7 @@ func (l *Log) BuildIndex() {
 		delete(l.index, k)
 	}
 	buf := make([]byte, 4)
-	var bodyBuf []byte
+	var lastValidBody []byte
 	offset := 0
 	index := 1
 	l.index[uint64(index)] = 0
@@ -145,7 +145,7 @@ func (l *Log) BuildIndex() {
 		}
 		offset += n
 		length := int(binary.BigEndian.Uint32(buf))
-		bodyBuf = make([]byte, length)
+		bodyBuf := make([]byte, length)
 		nn, err := io.ReadFull(l.file, bodyBuf)
 		if err != nil {
 			l.file.Truncate(int64(offset - n))
@@ -153,15 +153,17 @@ func (l *Log) BuildIndex() {
 		}
 		offset += nn
 		l.index[uint64(index)] = uint64(offset)
+		lastValidBody = bodyBuf
 		any = true
 	}
 	if !any {
 		l.lastLogIndex = 0
 		l.lastLogTerm = 0
+	} else {
+		e, _ := l.readEntry(lastValidBody)
+		l.lastLogIndex = e.Index
+		l.lastLogTerm = e.Term
 	}
-	e, _ := l.readEntry(bodyBuf)
-	l.lastLogIndex = e.Index
-	l.lastLogTerm = e.Term
 }
 
 func (l *Log) readEntry(buf []byte) (Entry, error) {
@@ -188,6 +190,9 @@ func (l *Log) AppendEntries(entries []Entry) error {
 	}
 
 	for _, e := range entries {
+		if e.Index < conflictIndex {
+			continue
+		}
 		ebytes, err := json.Marshal(e)
 		if err != nil {
 			return err

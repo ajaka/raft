@@ -7,9 +7,10 @@ import (
 )
 
 type Seed struct {
-	Id   string
-	Addr string
-	Port string
+	Id       string
+	Addr     string
+	Port     string
+	Filename string
 }
 
 func FetchSeeds() []Seed {
@@ -25,7 +26,7 @@ func FetchSeeds() []Seed {
 	}
 
 	var seeds []Seed
-	if err := v.Unmarshal(&seeds); err != nil {
+	if err := v.UnmarshalKey("seeds", &seeds); err != nil {
 		fmt.Printf("Failed to unmarshal service config: error -> %v ", err)
 		panic(err)
 	}

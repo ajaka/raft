@@ -378,6 +378,18 @@ func TestAppendMatchingEntriesNoTruncate(t *testing.T) {
 	got, ok := l.GetEntry(3)
 	assert.True(t, ok)
 	assert.Equal(t, []byte("c=3"), got.Payload)
+
+	// Entry 4 should have index 4
+	got, ok = l.GetEntry(4)
+	assert.True(t, ok)
+	assert.Equal(t, uint64(4), got.Index)
+
+	// GetEntries(1) should return exactly four entries with indices 1 through 4
+	allEntries := l.GetEntries(1)
+	require.Len(t, allEntries, 4)
+	for i, e := range allEntries {
+		assert.Equal(t, uint64(i+1), e.Index)
+	}
 }
 
 func TestPersistAfterRestart(t *testing.T) {
@@ -483,12 +495,12 @@ func TestBuildIndexCorruptedTail(t *testing.T) {
 
 	l.file.Close()
 
-	// Corrupt the file by truncating mid-entry
+	// Corrupt the file by truncating near the end
 	f, err := os.OpenFile(tmpFile, os.O_RDWR, 0644)
 	require.NoError(t, err)
 	info, _ := f.Stat()
-	// Truncate to middle of second entry
-	f.Truncate(info.Size() / 2)
+	// Truncate a few bytes before the end to exercise a partial entry body
+	f.Truncate(info.Size() - 3)
 	f.Close()
 
 	// Reopen - BuildIndex should handle truncated entry
