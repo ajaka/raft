@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package rpc;
+
+option go_package = "rpc/gen;rpc";
+
+import "entries.proto";
+import "vote.proto";
+import "propose.proto";
+
+service PeerService{
+    rpc AppendEntriesEvent(AppendEntriesRequest) returns (AppendEntriesResponse);
+    rpc RequestVoteEvent(RequestVoteRequest) returns (RequestVoteResponse);
+}
+
+service ClientService{
+    rpc MakeProposal(ProposalRequest) returns (ProposalResponse);
+}
